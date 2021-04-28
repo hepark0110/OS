@@ -6,7 +6,7 @@
 
 2. wait()
 
-3. create process
+3. create thread
 
 4. CPU Scheduling
     -FCFS
