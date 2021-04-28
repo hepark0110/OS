@@ -12,5 +12,3 @@
     -FCFS
     -RR
     -Preemptive priority Scheduling with Aging
-
-5. 
