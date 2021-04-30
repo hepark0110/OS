@@ -8,7 +8,6 @@
 
 3. create thread
 
-4. CPU Scheduling
-	-FCFS
+4. CPU Scheduling ( FCFS / RR / Preemptive with aging )
 	
 5. 
