@@ -1,9 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef enum process_state {init=0, ready, running, terminate} ProcState;
-
-typedef struct process {
+struct pcb {
 	int pid;
 
 	int priority;
@@ -12,72 +10,177 @@ typedef struct process {
 
 	int burst_time;
 
-	ProcState state;
+	int response_time;
 
-	PCB *next;
+	int waiting_time;
 
-} PCB;
+	int turnaround_time;
 
-PCB * pcb[10];
+	struct pcb *next;
 
-void bubbleSort(PCB *start)
+};
+
+struct pcb *start = NULL;
+struct pcb *new;
+struct pcb *temp = NULL;
+
+struct pcb *process[10]; //job queue
+
+int total_burst = 0, lst_arrival = 0;
+
+void swap(struct pcb *a, struct pcb *b)
 {
-    int swapped, i;
-    PCB *ptr1;
-    PCB *lptr = NULL;
-  
-    if (start == NULL)
-        return;
-  
-    do
-    {
-        swapped = 0;
-        ptr1 = start;
-  
-        while (ptr1->next != lptr)
-        {
-            if (ptr1->arrival_time > ptr1->next->arrival_time)
-            { 
-                swap(ptr1, ptr1->next);
-                swapped = 1;
-            }
-            ptr1 = ptr1->next;
-        }
-        lptr = ptr1;
-    }
-    while (swapped);
+	int temp = a->pid;
+	a->pid = b->pid;
+	b->pid = temp;
+
+	temp = a->arrival_time;
+	a->arrival_time = b->arrival_time;
+	b->arrival_time = temp;
+
+	temp = a->burst_time;
+	a->burst_time = b->burst_time;
+	b->burst_time = temp;
+
+	temp = a->response_time;
+	a->response_time = b->response_time;
+	b->response_time = temp;
+
+	temp = a->waiting_time;
+	a->waiting_time = b->waiting_time;
+	b->waiting_time = temp;
+
+	temp = a->turnaround_time;
+	a->turnaround_time = b->turnaround_time;
+	b->turnaround_time = temp;
 }
 
-void swap(PCB *a, PCB *b)
-{
-    int temp = a->arrival_time;
-    a->arrival_time = b->arrival_time;
-    b->arrival_time = temp;
+// ready queue with a linked list
+void insert(struct pcb *process) {
+
+	temp = start;
+	new = (struct pcb *)malloc(sizeof(struct pcb));
+
+	new->pid = process->pid;
+	new->burst_time = process->burst_time;
+	new->arrival_time = process->arrival_time;
+	new->waiting_time = 0;
+	new->turnaround_time = 0;
+
+	new->next = NULL;
+
+	if (start == NULL) // 아무 것도 없으면
+	{
+		start = new;
+	}
+	else if (new->arrival_time < temp->arrival_time) // 맨 앞으로 가야할 때
+	{
+		new->next = temp;
+		start = new;
+	}
+	else if(new->arrival_time > start->arrival_time) // 맨 앞은 아니면
+	{
+		if (temp->next == NULL) // start만 있고 뒤에 없으면 (하나만 있다는 거)
+		{
+			temp->next = new;
+		}
+		else { // 두 개 이상 있다는 거
+			
+			while (temp->next != NULL)
+			{
+				temp = temp->next;
+
+				if (new->arrival_time < temp->arrival_time) // temp보다 작으면 자리 바꾸고 next도 바꾸고
+				{
+					new->next = temp->next;
+					temp->next = new;
+
+					swap(new, temp);
+
+					break;
+				}
+			}
+			if (temp->next == NULL) // new가 제일 큰 경우
+			{
+				temp->next = new;
+			}
+		}
+	}
+	
 }
-
-void print_process(PCB *pcb)
+void print()
 {
-    printf("Scheduling : FCFS \n ==============================================\n");
-
-	PCB *temp = pcb;
+	temp = start;
 
 	while (temp != NULL) {
-        printf("<time > pid: %d process is running. \n", temp->pid);
-        temp = temp->next;
-    }
+		printf("%d", temp->pid);
+		temp = temp->next;
+	}
 }
 
+// print output
+void print_process() {
 
-int main(int argc, char *argv[])
+	float avgWT = 0, avgTT = 0;
+
+	temp = start;
+	printf("=========================================================== \n");
+	while (temp != NULL)
+	{
+		avgWT += temp->waiting_time;
+		avgTT += temp->turnaround_time;
+		temp = temp->next;
+	}
+	
+	printf("Average cpu usage : %f %%\n", avgWT / 10);
+	printf("Average waiting time : %f \n", avgWT / 10);
+	printf("Average response time : %f \n", avgTT / 10);
+	printf("Average turnaround time : %f \n", avgTT / 10);
+}
+
+void fcfs()
 {
-	// printf("Scheduling : FCFS \n ==============================================\n");
+	printf("Scheduling : FCFS \n ========================================\n");
 
-	if (argc != 2)
-		printf("usage: %s filename", argv[0]);
+	int time = 0;
+		
+	temp = start;
 
-	else {
+	
 
-		FILE *fp = fopen(argv[1], "r");
+	while (temp != NULL)
+	{			
+		
+		
+		for (int i = 0; i < 10; i++) { // 도착한 애들 알려주기
+			if (process[i]->arrival_time == time) 
+				printf("<time %d> [new arrival] process %d\n", time, process[i]->pid);
+		}
+
+		if (time >= temp->arrival_time)
+		{
+			printf("<time %d> process %d is running\n", time, temp->pid);
+			
+			temp->waiting_time = time - (temp->arrival_time + temp->burst_time);
+			temp->turnaround_time = time - (temp->arrival_time);
+			temp = temp->next;
+
+		}
+		else
+		{
+			printf("<time %d> ---- system is idle ----\n", time);
+		}
+
+		time++;
+
+	}
+
+}
+
+int main()
+{
+
+		FILE *fp = fopen("input.txt", "r");
 
 		if (fp == 0) {
 			printf("Could not open file.\n");
@@ -85,116 +188,22 @@ int main(int argc, char *argv[])
 		}
 
 		else {
-            
-			int id, pri, arr_t, bur_t;
-
-			PCB *start = NULL;
 			
-			for (int i=0; i<10; i++) {
+			for (int i = 0; i < 10; i++) {
 
-		        fscanf(fp, "%d %d %d %d", &pcb[i]->pid, &pcb[i]->priority, &pcb[i]->arrival_time, &pcb[i]->burst_time);
+				process[i] = (struct pcb*)malloc(sizeof(struct pcb));
 
-				if(i==9) pcb[i]->next = NULL;
+				fscanf(fp, "%d %d %d %d", &process[i]->pid, &process[i]->priority, &process[i]->arrival_time, &process[i]->burst_time);
+				insert(process[i]);
 
-                else pcb[i]->next = pcb[i+1];
-
-	        }
-
-			bubblesort(pcb[0]);
-
-			print_process(pcb[0]);
+			}
 
 			fclose(fp);
 
+			print();
+			//fcfs();
+			//print_process();
+			
 		}
-	}
-
+	
 }
-
-/*
-#include<stdio.h>
-// Struct Storing all the Processes
-struct process
-{
-	int process;
-	int arrival;
-	int burst;
-	int wait;
-	int response;
-	int tat;
-}p[10];
-
-// Main Function
-int main()
-{
-    int n,avwt=0,avtat=0,i,j,pos,max,temp,sum=0;
-    printf("\nEnter total number of processes:");
-    scanf("%d",&n);
-
-// Taking the Input from the User
-    for(i=0;i<n;i++)
-    {
-	p[i].process = i+1;
-    	printf("\n Process [%d] :\n",i+1);
-        printf("\n Arrival Time:");
-        scanf("%d",&p[i].arrival);
-        printf("\n Burst Time:");
-        scanf("%d",&p[i].burst);
-    }
-    
-// Sorting all the Processes according to their Arrival Time
-    
-    for(i=0;i<n;i++)
-    {
-        pos=i;
-        for(j=i+1;j<n;j++)
-        {
-            if(p[j].arrival<p[pos].arrival)
-            {
-                pos=j;
-            }
-        }
- 
-        temp=p[i].arrival;
-        p[i].arrival=p[pos].arrival;
-        p[pos].arrival=temp;
-
-        temp=p[i].burst;
-        p[i].burst=p[pos].burst;
-        p[pos].burst=temp;
- 
-        temp=p[i].process;
-        p[i].process=p[pos].process;
-        p[pos].process=temp;
-    
-    }
-    p[0].wait = 0;
-// Calculating Waiting and Response Time
-    for(i=1;i<n;i++)
-    {
-	sum = sum + p[i-1].burst;
-        p[i].wait = sum - p[i].arrival ; 
-	if(p[i].wait <0)
-		p[i].wait= 0;
-        p[i].response = p[i].wait;
-    }
- 
-    printf("\nProcess\t\tArrival Time\tBurst Time\tResponse Time\tWaiting Time\tTurnaround Time");
- 
-// Calculating Turn Around Time and Printing the Table
-    for(i=0;i<n;i++)
-    {
-        p[i].tat=p[i].burst+p[i].wait;
-        avwt+=p[i].wait;
-        avtat+=p[i].tat;
-        printf("\nP[%d]\t\t%d\t\t%d\t\t%d\t\t%d\t\t%d",p[i].process,p[i].arrival,p[i].burst,p[i].response,p[i].wait,p[i].tat);
-    }
- 
-    avwt/=i;
-    avtat/=i;
-    printf("\n\nAverage Waiting Time:%d",avwt);
-    printf("\nAverage Turnaround Time:%d\n\n",avtat);
- 
-    return 0;
-}
-*/
