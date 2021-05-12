@@ -26,7 +26,7 @@ struct pcb *temp = NULL;
 
 struct pcb *process[10]; //job queue
 
-int total_burst = 0, lst_arrival = 0;
+int total_wait;
 
 void swap(struct pcb *a, struct pcb *b)
 {
@@ -121,21 +121,20 @@ void print()
 // print output
 void print_process() {
 
-	float avgWT = 0, avgTT = 0;
+	int total_burst = 0;
 
 	temp = start;
-	printf("=========================================================== \n");
+	
 	while (temp != NULL)
 	{
-		avgWT += temp->waiting_time;
-		avgTT += temp->turnaround_time;
+		total_burst += temp->burst_time;
+
 		temp = temp->next;
 	}
 	
-	printf("Average cpu usage : %f %%\n", avgWT / 10);
-	printf("Average waiting time : %f \n", avgWT / 10);
-	printf("Average response time : %f \n", avgTT / 10);
-	printf("Average turnaround time : %f \n", avgTT / 10);
+	printf("Average waiting time : %.2f \n", (double)total_wait / (double)10);
+	printf("Average response time : %.2f \n", (double)total_wait / (double)10);
+	printf("Average turnaround time : %.2f \n", (double)(total_wait + total_burst) / (double)10);
 }
 
 void fcfs()
@@ -143,37 +142,60 @@ void fcfs()
 	printf("Scheduling : FCFS \n ========================================\n");
 
 	int time = 0;
+	int idle = 0;
 		
 	temp = start;
 
-	
+	for (time = 0; time < start->arrival_time; time++)
+	{
+		printf("<time %d> ----system is idle ----\n", time);
+
+		idle++;
+	}
+
+	int num_arrival = 0; // 도착한 프로세스의 개수
 
 	while (temp != NULL)
 	{			
-		
-		
-		for (int i = 0; i < 10; i++) { // 도착한 애들 알려주기
-			if (process[i]->arrival_time == time) 
-				printf("<time %d> [new arrival] process %d\n", time, process[i]->pid);
-		}
-
-		if (time >= temp->arrival_time)
+		for (int i = 0; i < temp->burst_time; i++)
 		{
+			for (int i = 0; i < 10; i++) { // 도착한 애들 알려주기
+				if (process[i]->arrival_time == time)
+				{
+					printf("<time %d> [new arrival] process %d\n", time, process[i]->pid);
+
+					num_arrival++; //도착했을 때마다 증가
+				}
+			}
+
 			printf("<time %d> process %d is running\n", time, temp->pid);
-			
-			temp->waiting_time = time - (temp->arrival_time + temp->burst_time);
-			temp->turnaround_time = time - (temp->arrival_time);
-			temp = temp->next;
-
+			total_wait += (num_arrival - 1); // 도착한 애들 중에 실행 중인 애 하나 뺀 수가 지금 기다리고 있는 애들 수
+			time++;
 		}
-		else
+
+		num_arrival--; // 한 프로세스가 종료되었다는 거니깐 도착한 애들에서 하나 빼기
+
+		temp = temp->next;
+		
+		if ((num_arrival == 0) && (temp != NULL))
 		{
-			printf("<time %d> ---- system is idle ----\n", time);
-		}
+			printf("<time %d> ----system is idle ----\n", time);
 
-		time++;
+			time++;
+			idle++;
+		}
+		else if(temp != NULL)
+		{
+			printf("------------------------------------(context-switch)\n");
+		}
 
 	}
+
+	printf("<time %d> All process finish \n", time);
+
+	printf("========================================\n");
+
+	printf("Average cpu usage : %.2f %%\n", 100 * (double)(time - idle) / time);
 
 }
 
@@ -200,9 +222,9 @@ int main()
 
 			fclose(fp);
 
-			print();
-			//fcfs();
-			//print_process();
+			//print();
+			fcfs();
+			print_process();
 			
 		}
 	
