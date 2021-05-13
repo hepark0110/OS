@@ -108,17 +108,7 @@ void insert(struct pcb *process) {
 	}
 	
 }
-void print()
-{
-	temp = start;
 
-	while (temp != NULL) {
-		printf("%d", temp->pid);
-		temp = temp->next;
-	}
-}
-
-// print output
 void print_process() {
 
 	int total_burst = 0;
@@ -173,6 +163,8 @@ void fcfs()
 			time++;
 		}
 
+		printf("<time %d> process %d is finished\n", time, temp->pid);
+
 		num_arrival--; // 한 프로세스가 종료되었다는 거니깐 도착한 애들에서 하나 빼기
 
 		temp = temp->next;
@@ -222,7 +214,6 @@ int main()
 
 			fclose(fp);
 
-			//print();
 			fcfs();
 			print_process();
 			
