@@ -10,7 +10,7 @@ struct pcb {
 
 	int burst_time;
 
-	int first_run;
+	int first_run; // 처음으로 실행하는 건지 판단하기 위해
 
 	struct pcb *next;
 
@@ -31,7 +31,7 @@ int total_rt = 0;
 int total_wt = 0;
 
 // ready queue with a linked list
-void insert(struct pcb *process) {
+void insert(struct pcb *process) { // 들어오면 linked list 맨 뒤로
 
 	temp = start;
 	new = (struct pcb *)malloc(sizeof(struct pcb));
@@ -56,7 +56,7 @@ void insert(struct pcb *process) {
 
 }
 
-int terminate = 0;
+int terminate = 0; // 종료된 프로세스의 개수를 세기 위해
 
 void RR()
 {
@@ -68,7 +68,7 @@ void RR()
 		{
 			for (int i = 0; i < 10; i++)
 			{
-				if (process[i]->arrival_time == time)
+				if (process[i]->arrival_time == time) // 누가 도착!
 				{
 					printf("<time %d> [new arrival] process %d \n", time, process[i]->pid);
 
@@ -94,21 +94,22 @@ void RR()
 				{
 					printf("<time %d> process %d is running \n", time, start->pid);
 
-					if (start->first_run == 0)
+					if (start->first_run == 0) // 만약 이게 첫 실행이었으면 0을 1로 바꿔줌 (이제 다음부턴 첫 실행 아니니깐)
 						start->first_run = 1;
 
-					temp = start->next;
+					
+					temp = start->next; // 실행 중인 프로세스 다음부터 
 
 					while (temp != NULL)
 					{
-						total_wt++;
+						total_wt++; // 실행 중인 프로세스 빼고 다 waiting time 증가
 
-						if (temp->first_run == 0) total_rt++;
+						if (temp->first_run == 0) total_rt++; // 아직 한 번도 실행 못한 프로세스들은 response time도 증가
 
 						temp = temp->next;
 					}
 
-					for (int i = 0; i < 10; i++)
+					for (int i = 0; i < 10; i++) // 이 와중에 또 누구 도착하면 알림
 					{
 						if (process[i]->arrival_time == time)
 						{
@@ -121,12 +122,12 @@ void RR()
 					time++;
 				}
 
-				printf("<time %d> process %d is finished \n", time, start->pid);
+				printf("<time %d> process %d is finished \n", time, start->pid); // 마지막 실행이었으니깐 프로세스 종료
 
-				terminate++;
+				terminate++; // 종료 프로세스 개수 증가
 				
 
-				if (terminate < 10) printf("--------------------------------------(Context-Switch) \n");
+				if (terminate < 10) printf("--------------------------------------(Context-Switch) \n"); // 아직 다 종료된 거 아니면 context switch
 
 				start = start->next;
 
