@@ -1,13 +1,9 @@
 # OS #
 
-## OS lecture practice ##
+## OS practice ##
 
-1. using vi editor
+1. create thread
 
-2. wait()
-
-3. create thread
-
-4. CPU Scheduling ( FCFS / RR / Preemptive with aging )
+2. CPU Scheduling ( FCFS / RR / Preemptive with aging )
 	
-5. 
+3. bankers algorithm
